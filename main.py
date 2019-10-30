@@ -4,29 +4,40 @@ from flask import jsonify
 
 
 def heatwave_api(request):
+    # Get lat and lon from request body
     request_json = request.get_json()
     print(request_json)
 
-    in_nc = nc.Dataset("./data/CCRC_NARCliM_YEA_1950-2009_HWN_EHF_NF13.nc")
-    print(in_nc)
+    if request_json and "lat" in request_json:
+        input_lat = request_json["lat"]
+    else:
+        input_lat = -27.4698
+    if request_json and "lon" in request_json:
+        input_lon = request_json["lon"]
+    else:
+        input_lon = 153.0251
 
-    temps = in_nc.variables['HWN_EHF']
+    print(input_lat, input_lon)
+
+    in_nc = nc.Dataset("./data/CCRC_NARCliM_YEA_1950-2009_HWD_EHF_NF13.nc")
+
+    temps = in_nc.variables['HWD_EHF']
     mt = in_nc.variables['time']  # read time variable
 
     time = mt[:]  # Reads the netCDF variable MT, array of one element
-    print(time)
+
     time_unit = in_nc.variables["time"].getncattr('units')
     time_cal = in_nc.variables["time"].getncattr(
         'calendar')  # read calendar type
     local_time = nc.num2date(time, units=time_unit,
                              calendar=time_cal)  # convert time
-    print("Original time %s is now converted as %s" %
-          (time[0], local_time[0]))  # check conversion
+    # print("Original time %s is now converted as %s" %
+    #       (time[0], local_time[0]))  # check conversion
 
     lat, lon = in_nc.variables['lat'], in_nc.variables['lon']
 
-    target_lat = -27.4698
-    target_lon = 153.0251
+    target_lat = input_lat
+    target_lon = input_lon
 
     latvals = lat[:]
     lonvals = lon[:]  # extract lat/lon values (in degrees) to numpy arrays
@@ -40,13 +51,13 @@ def heatwave_api(request):
         return np.unravel_index(minindex_flattened, latvals.shape)
 
     iy_min, ix_min = getclosest_ij(latvals, lonvals, target_lat, target_lon)
-    print(iy_min, ix_min)
+    #print(iy_min, ix_min)
 
     temps_vals = temps[:]
     temperature_dict = {}
 
     for year in range(19):
-        print(temps[year, iy_min, ix_min])
+        #print(temps[year, iy_min, ix_min])
         temperature_dict[str(local_time[year].year)] = int(
             temps[year, iy_min, ix_min])
 
