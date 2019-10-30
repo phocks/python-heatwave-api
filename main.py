@@ -3,23 +3,8 @@ import netCDF4 as nc  # netcdf module
 from flask import jsonify
 
 
-def heatwave_api(request):
-    # Get lat and lon from request body
-    request_json = request.get_json()
-    print(request_json)
-
-    if request_json and "lat" in request_json:
-        input_lat = request_json["lat"]
-    else:
-        input_lat = -27.4698
-    if request_json and "lon" in request_json:
-        input_lon = request_json["lon"]
-    else:
-        input_lon = 153.0251
-
-    print(input_lat, input_lon)
-
-    in_nc = nc.Dataset("./data/CCRC_NARCliM_YEA_1950-2009_HWD_EHF_NF13.nc")
+def get_temperature_dict(file, input_lat, input_lon):
+    in_nc = nc.Dataset(file)
 
     temps = in_nc.variables['HWD_EHF']
     mt = in_nc.variables['time']  # read time variable
@@ -56,12 +41,47 @@ def heatwave_api(request):
     temps_vals = temps[:]
     temperature_dict = {}
 
-    for year in range(19):
+    for year in range(len(local_time)):
         #print(temps[year, iy_min, ix_min])
         temperature_dict[str(local_time[year].year)] = int(
             temps[year, iy_min, ix_min])
 
-    return jsonify(temperature_dict)
+    return temperature_dict
+
+
+def heatwave_api(request):
+    # Get lat and lon from request body
+    request_json = request.get_json()
+    print(request_json)
+
+    if request_json and "lat" in request_json:
+        input_lat = request_json["lat"]
+    else:
+        input_lat = -27.4698
+    if request_json and "lon" in request_json:
+        input_lon = request_json["lon"]
+    else:
+        input_lon = 153.0251
+
+    print(input_lat, input_lon)
+
+    historical = get_temperature_dict(
+        "./data/CCRC_NARCliM_YEA_1950-2009_HWD_EHF_NF13.nc", input_lat, input_lon)
+    modern = get_temperature_dict(
+        "./data/CCRC_NARCliM_YEA_1990-2009_HWD_EHF_NF13.nc", input_lat, input_lon)
+    projection_1 = get_temperature_dict(
+        "./data/CCRC_NARCliM_YEA_2020-2039_HWD_EHF_NF13.nc", input_lat, input_lon)
+    projection_2 = get_temperature_dict(
+        "./data/CCRC_NARCliM_YEA_2060-2079_HWD_EHF_NF13.nc", input_lat, input_lon)
+
+    return_value = {
+        "historical": historical,
+        "modern": modern,
+        "projection_1": projection_1,
+        "projection_2": projection_2
+    }
+
+    return jsonify(return_value)
 
 
 if __name__ == "__main__":
