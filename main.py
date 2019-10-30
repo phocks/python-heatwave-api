@@ -11,13 +11,7 @@ def heatwave_api(request):
     print(in_nc)
 
     temps = in_nc.variables['HWN_EHF']
-    print(temps)  # print the variable attributes
-
-    print(temps.dimensions)
-    print(temps.shape)
-
     mt = in_nc.variables['time']  # read time variable
-    print(mt)  # print the variable attributes
 
     time = mt[:]  # Reads the netCDF variable MT, array of one element
     print(time)
@@ -36,8 +30,8 @@ def heatwave_api(request):
 
     latvals = lat[:]
     lonvals = lon[:]  # extract lat/lon values (in degrees) to numpy arrays
-    import numpy as np
 
+    # Convert lat lon to position in 2D array
     def getclosest_ij(lats, lons, latpt, lonpt):
         # find squared distance of every point on grid
         dist_sq = (lats-latpt)**2 + (lons-lonpt)**2
@@ -49,15 +43,14 @@ def heatwave_api(request):
     print(iy_min, ix_min)
 
     temps_vals = temps[:]
-    location_data = []
+    temperature_dict = {}
 
     for year in range(19):
         print(temps[year, iy_min, ix_min])
-        location_data.append(int(temps_vals[year, iy_min, ix_min]))
+        temperature_dict[str(local_time[year].year)] = int(
+            temps[year, iy_min, ix_min])
 
-    print(location_data)
-
-    return jsonify({"1960": location_data})
+    return jsonify(temperature_dict)
 
 
 if __name__ == "__main__":
