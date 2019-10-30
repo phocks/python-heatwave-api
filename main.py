@@ -52,7 +52,7 @@ def get_temperature_dict(file, input_lat, input_lon):
 def heatwave_api(request):
     # Get lat and lon from request body
     request_json = request.get_json()
-    print(request_json)
+    # print(request_json)
 
     if request_json and "lat" in request_json:
         input_lat = request_json["lat"]
@@ -62,6 +62,17 @@ def heatwave_api(request):
         input_lon = request_json["lon"]
     else:
         input_lon = 153.0251
+
+    print(input_lat, input_lon)
+
+    # In case we get a GET request lat lon
+    input_get_lat = request.args.get("lat")
+    input_get_lon = request.args.get("lon")
+
+    if input_get_lat != None:
+        input_lat = float(input_get_lat)
+    if input_get_lon != None:
+        input_lon = float(input_get_lon)
 
     print(input_lat, input_lon)
 
