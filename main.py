@@ -1,6 +1,19 @@
 import numpy as np  # numpy module
 import netCDF4 as nc  # netcdf module
 from flask import jsonify
+import math
+
+AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
+NUDGE_FACTOR = 0.01
+
+# Check if all values are zero
+
+
+def is_all_zero(dict):
+    for key in dict.keys():
+        if dict[key] > 0:
+            return False
+    return True
 
 
 def get_temperature_dict(file, input_lat, input_lon):
@@ -49,31 +62,7 @@ def get_temperature_dict(file, input_lat, input_lon):
     return temperature_dict
 
 
-def heatwave_api(request):
-    # Get lat and lon from request body
-    request_json = request.get_json()
-    # print(request_json)
-
-    if request_json and "lat" in request_json:
-        input_lat = request_json["lat"]
-    else:
-        input_lat = -27.4698
-    if request_json and "lon" in request_json:
-        input_lon = request_json["lon"]
-    else:
-        input_lon = 153.0251
-
-    print(input_lat, input_lon)
-
-    # In case we get a GET request lat lon
-    input_get_lat = request.args.get("lat")
-    input_get_lon = request.args.get("lon")
-
-    if input_get_lat != None:
-        input_lat = float(input_get_lat)
-    if input_get_lon != None:
-        input_lon = float(input_get_lon)
-
+def main_process(input_lat, input_lon):
     print(input_lat, input_lon)
 
     historical = get_temperature_dict(
@@ -92,7 +81,79 @@ def heatwave_api(request):
         "projection_2": projection_2
     }
 
-    return jsonify(return_value)
+    return return_value
+
+
+def heatwave_api(request):
+    # Get lat and lon from request body
+    request_json = request.get_json()
+    # print(request_json)
+
+    if request_json and "lat" in request_json:
+        input_lat = request_json["lat"]
+    else:
+        input_lat = -27.4698
+    if request_json and "lon" in request_json:
+        input_lon = request_json["lon"]
+    else:
+        input_lon = 153.0251
+
+    # In case we get a GET request lat lon
+    input_get_lat = request.args.get("lat")
+    input_get_lon = request.args.get("lon")
+
+    if input_get_lat != None:
+        input_lat = float(input_get_lat)
+    if input_get_lon != None:
+        input_lon = float(input_get_lon)
+
+    keep_trying = True
+    scan_radius = 0.1
+
+    scan_lat = input_lat
+    scan_lon = input_lon
+    scan_radius = 0.5
+    scan_angle = 0.0
+    scan_angle_nudge = 0.25
+    scan_radius_nudge = 0.5
+
+    while keep_trying:
+        
+
+        final_return = main_process(scan_lat, scan_lon)
+
+        # Check if still in the ocean
+        if (is_all_zero(final_return["historical"]) and
+            is_all_zero(final_return["modern"]) and
+            is_all_zero(final_return["projection_1"]) and
+                is_all_zero(final_return["projection_2"])):
+
+        #     print("Likely not on land... moving position towards middle Australia")
+        #     if input_lat <= AUS_CENTER["lat"]:
+        #         input_lat = input_lat + NUDGE_FACTOR
+        #     elif input_lat >= AUS_CENTER["lat"]:
+        #         input_lat = input_lat = NUDGE_FACTOR
+        #     if input_lon <= AUS_CENTER["lon"]:
+        #         input_lon = input_lon + NUDGE_FACTOR
+        #     elif input_lon >= AUS_CENTER["lon"]:
+        #         input_lon = input_lon - NUDGE_FACTOR
+        # else:
+        #     keep_trying = False
+
+                print("Likely not on land... scanning surrounding positions")
+                scan_lat = input_lat + scan_radius * math.cos(scan_angle * math.pi)
+                scan_lon = input_lon + scan_radius * math.sin(scan_angle * math.pi)
+
+                scan_angle = scan_angle + 0.1
+
+                if scan_angle >= 2.0:
+                    scan_angle = 0.0
+                    scan_radius = scan_radius + scan_radius_nudge
+        else: 
+            keep_trying = False
+                
+
+    return jsonify(final_return)
 
 
 if __name__ == "__main__":
