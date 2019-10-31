@@ -112,14 +112,12 @@ def heatwave_api(request):
 
     scan_lat = input_lat
     scan_lon = input_lon
-    scan_radius = 0.5
+    scan_radius = 0.3
     scan_angle = 0.0
     scan_angle_nudge = 0.25
-    scan_radius_nudge = 0.5
+    scan_radius_nudge = 0.3
 
     while keep_trying:
-        
-
         final_return = main_process(scan_lat, scan_lon)
 
         # Check if still in the ocean
@@ -128,30 +126,29 @@ def heatwave_api(request):
             is_all_zero(final_return["projection_1"]) and
                 is_all_zero(final_return["projection_2"])):
 
-        #     print("Likely not on land... moving position towards middle Australia")
-        #     if input_lat <= AUS_CENTER["lat"]:
-        #         input_lat = input_lat + NUDGE_FACTOR
-        #     elif input_lat >= AUS_CENTER["lat"]:
-        #         input_lat = input_lat = NUDGE_FACTOR
-        #     if input_lon <= AUS_CENTER["lon"]:
-        #         input_lon = input_lon + NUDGE_FACTOR
-        #     elif input_lon >= AUS_CENTER["lon"]:
-        #         input_lon = input_lon - NUDGE_FACTOR
-        # else:
-        #     keep_trying = False
+            #     print("Likely not on land... moving position towards middle Australia")
+            #     if input_lat <= AUS_CENTER["lat"]:
+            #         input_lat = input_lat + NUDGE_FACTOR
+            #     elif input_lat >= AUS_CENTER["lat"]:
+            #         input_lat = input_lat = NUDGE_FACTOR
+            #     if input_lon <= AUS_CENTER["lon"]:
+            #         input_lon = input_lon + NUDGE_FACTOR
+            #     elif input_lon >= AUS_CENTER["lon"]:
+            #         input_lon = input_lon - NUDGE_FACTOR
+            # else:
+            #     keep_trying = False
 
-                print("Likely not on land... scanning surrounding positions")
-                scan_lat = input_lat + scan_radius * math.cos(scan_angle * math.pi)
-                scan_lon = input_lon + scan_radius * math.sin(scan_angle * math.pi)
+            print("Likely not on land... scanning surrounding positions")
+            scan_lat = input_lat + scan_radius * math.cos(scan_angle * math.pi)
+            scan_lon = input_lon + scan_radius * math.sin(scan_angle * math.pi)
 
-                scan_angle = scan_angle + 0.1
+            scan_angle += scan_angle_nudge
 
-                if scan_angle >= 2.0:
-                    scan_angle = 0.0
-                    scan_radius = scan_radius + scan_radius_nudge
-        else: 
+            if scan_angle >= 2.0:
+                scan_angle = 0.0
+                scan_radius += scan_radius_nudge
+        else:
             keep_trying = False
-                
 
     return jsonify(final_return)
 
