@@ -3,8 +3,8 @@ import netCDF4 as nc  # netcdf module
 from flask import jsonify
 import math
 
-AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
-NUDGE_FACTOR = 0.01
+# AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
+# NUDGE_FACTOR = 0.01
 
 # Check if all values are zero
 
@@ -112,10 +112,10 @@ def heatwave_api(request):
 
     scan_lat = input_lat
     scan_lon = input_lon
-    scan_radius = 0.3
+    scan_radius = 0.5
+    scan_radius_nudge = 0.5
     scan_angle = 0.0
     scan_angle_nudge = 0.25
-    scan_radius_nudge = 0.3
 
     while keep_trying:
         final_return = main_process(scan_lat, scan_lon)
