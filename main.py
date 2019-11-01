@@ -150,6 +150,8 @@ def heatwave_api(request):
         else:
             keep_trying = False
 
+    final_return["description"] = "Duration of the longest heatwave per year"
+
     return jsonify(final_return)
 
 
