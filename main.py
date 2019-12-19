@@ -4,11 +4,26 @@ from flask import jsonify
 import math
 import pandas as pd
 
-postcodes = pd.read_csv("data/postcodes.csv", usecols=["postcode", "long", "lat"])
-filtered_postcodes = postcodes.loc[postcodes["postcode"] == 4053]
 
-print(filtered_postcodes)
+def get_lon_lat_from_postcode(postcode):
+    # Check we're parsing a number
+    if type(postcode) != int:
+        print("Looks like it's not a postcode")
+        return
 
+    postcodes = pd.read_csv("data/postcodes.csv", usecols=["postcode", "long", "lat"])
+    filtered_postcodes = postcodes.loc[postcodes["postcode"] == postcode]
+
+    if filtered_postcodes.empty:
+        print("Error: No postcodes found")
+        return
+
+    print(filtered_postcodes)
+
+
+get_lon_lat_from_postcode(4053)
+
+# print(filtered_postcodes[0:1]["long"].values[0])
 
 
 # AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
