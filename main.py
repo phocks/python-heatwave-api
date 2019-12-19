@@ -2,13 +2,20 @@ import numpy as np  # numpy module
 import netCDF4 as nc  # netcdf module
 from flask import jsonify
 import math
+import pandas as pd
+
+postcodes = pd.read_csv("data/postcodes.csv", usecols=["postcode", "long", "lat"])
+filtered_postcodes = postcodes.loc[postcodes["postcode"] == 4053]
+
+print(filtered_postcodes)
+
+
 
 # AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
 # NUDGE_FACTOR = 0.01
+DEFAULT_LOCALE = {"lon": -27.4698, "lat": 153.0251}
 
 # Check if all values are zero
-
-
 def is_all_zero(dict):
     for key in dict.keys():
         if dict[key] > 0:
@@ -93,11 +100,11 @@ def heatwave_api(request):
     if request_json and "lat" in request_json:
         input_lat = request_json["lat"]
     else:
-        input_lat = -27.4698
+        input_lat = DEFAULT_LOCALE["lat"]
     if request_json and "lon" in request_json:
         input_lon = request_json["lon"]
     else:
-        input_lon = 153.0251
+        input_lon = DEFAULT_LOCALE["lon"]
 
     # In case we get a GET request lat lon
     input_get_lat = request.args.get("lat")

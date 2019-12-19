@@ -16,3 +16,4 @@ wheel==0.31.1
 # Custom packages
 numpy==1.17.3
 netCDF4===1.5.3
+pandas===0.25.3
