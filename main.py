@@ -4,27 +4,38 @@ from flask import jsonify
 import math
 import pandas as pd
 
-
+# Tries to geocode a postcode
+# Note: only returns first entry found (for now)
 def get_lon_lat_from_postcode(postcode):
     # Check we're parsing a number
-    if type(postcode) != int:
-        print("Looks like it's not a postcode")
-        return
+    if not isinstance(postcode, int):
+        print("Looks like it's not a postcode integer")
+        return False
 
+    # Read postcode data from disk
     postcodes = pd.read_csv("data/postcodes.csv", usecols=["postcode", "long", "lat"])
-    filtered_postcodes = postcodes.loc[postcodes["postcode"] == postcode]
 
-    if filtered_postcodes.empty:
-        print("Error: No postcodes found")
-        return
+    # Filter out all but our postcode
+    filtered_postcodes = postcodes.loc[postcodes["postcode"] == postcode]
 
     print(filtered_postcodes)
 
+    # What if there's none
+    if filtered_postcodes.empty:
+        print("Error: No postcodes found")
+        return False
 
-get_lon_lat_from_postcode(4053)
+    lon = filtered_postcodes[0:1]["long"].values[0]
+    lat = filtered_postcodes[0:1]["lat"].values[0]
 
-# print(filtered_postcodes[0:1]["long"].values[0])
+    if math.isnan(lon) or math.isnan(lat):
+        print("Postcode doesn't translate to lonlat")
+        return False
 
+    return [lon, lat]
+
+
+print(get_lon_lat_from_postcode(4350))
 
 # AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
 # NUDGE_FACTOR = 0.01
