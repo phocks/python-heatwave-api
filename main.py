@@ -1,12 +1,12 @@
 import numpy as np  # numpy module
 import netCDF4 as nc  # netcdf module
-from flask import jsonify
+from flask import jsonify  # for local dev server
 import math
 import pandas as pd
 
-# Tries to geocode a postcode
+# Tries to geocode a postcode integer, otherwise returns false
 # Note: only returns first entry found (for now)
-def get_lon_lat_from_postcode(postcode):
+def get_locataion_from_postcode(postcode):
     # Check we're parsing a number
     if not isinstance(postcode, int):
         print("Looks like it's not a postcode integer")
@@ -17,8 +17,6 @@ def get_lon_lat_from_postcode(postcode):
 
     # Filter out all but our postcode
     filtered_postcodes = postcodes.loc[postcodes["postcode"] == postcode]
-
-    print(filtered_postcodes)
 
     # What if there's none
     if filtered_postcodes.empty:
@@ -32,14 +30,12 @@ def get_lon_lat_from_postcode(postcode):
         print("Postcode doesn't translate to lonlat")
         return False
 
-    return [lon, lat]
+    return [lat, lon]
 
-
-print(get_lon_lat_from_postcode(4350))
 
 # AUS_CENTER = {"lat": -25.2744, "lon": 133.7751}
 # NUDGE_FACTOR = 0.01
-DEFAULT_LOCALE = {"lon": -27.4698, "lat": 153.0251}
+DEFAULT_LOCALE = {"lat": -27.4698, "lon": 153.0251}  # Brisbane
 
 # Check if all values are zero
 def is_all_zero(dict):
@@ -93,7 +89,7 @@ def get_temperature_dict(file, input_lat, input_lon):
 
 
 def main_process(input_lat, input_lon):
-    print(input_lat, input_lon)
+    print("Scanning...", input_lat, input_lon)
 
     historical = get_temperature_dict(
         "./data/CCRC_NARCliM_YEA_1950-2009_HWD_EHF_NF13.nc", input_lat, input_lon
@@ -109,6 +105,7 @@ def main_process(input_lat, input_lon):
     )
 
     return_value = {
+        "location": [input_lat, input_lon],
         "historical": historical,
         "modern": modern,
         "projection_1": projection_1,
@@ -118,24 +115,42 @@ def main_process(input_lat, input_lon):
     return return_value
 
 
+# Entry point for the cloud function
 def heatwave_api(request):
+    # FOR NOW WE ARE MAKING IT GET REQUEST ONLY
     # Get lat and lon from request body
-    request_json = request.get_json()
-    # print(request_json)
+    # request_json = request.get_json()
 
-    if request_json and "lat" in request_json:
-        input_lat = request_json["lat"]
-    else:
-        input_lat = DEFAULT_LOCALE["lat"]
-    if request_json and "lon" in request_json:
-        input_lon = request_json["lon"]
-    else:
-        input_lon = DEFAULT_LOCALE["lon"]
+    # if request_json and "postcode" in request_json:
+    #     postcode = int(request_json["postcode"])
+    #     location = get_locataion_from_postcode(postcode)
+
+    #     input_lat = location[0]
+    #     input_lon = location[1]
+
+    #     print(input_lat, input_lon)
+
+    # else:
+    #     if request_json and "lat" in request_json:
+    #         input_lat = request_json["lat"]
+    #     else:
+    #         input_lat = DEFAULT_LOCALE["lat"]
+    #     if request_json and "lon" in request_json:
+    #         input_lon = request_json["lon"]
+    #     else:
+    #         input_lon = DEFAULT_LOCALE["lon"]
 
     # In case we get a GET request lat lon
+    input_get_postcode = request.args.get("postcode")
     input_get_lat = request.args.get("lat")
     input_get_lon = request.args.get("lon")
 
+    if input_get_postcode != None:
+        postcode = int(request.args.get("postcode"))
+        location = get_locataion_from_postcode(postcode)
+
+        input_lat = location[0]
+        input_lon = location[1]
     if input_get_lat != None:
         input_lat = float(input_get_lat)
     if input_get_lon != None:
@@ -191,6 +206,7 @@ def heatwave_api(request):
     return jsonify(final_return)
 
 
+# If running locally this creates a local server
 if __name__ == "__main__":
     from flask import Flask, request
 
