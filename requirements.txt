@@ -11,7 +11,7 @@ pip==18.0
 requests==2.21.0
 setuptools==40.2.0
 Werkzeug==0.15.3
-wheel==0.31.1
+wheel==0.38.1
 
 # Custom packages
 numpy==1.17.3
